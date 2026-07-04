@@ -1,24 +1,23 @@
 # EV Battery Intelligence Dashboard — Backend API
 
-Production-level backend banaya gaya hai tumhare **EV Battery Intelligence Dashboard** React frontend ke liye.
-Node.js + Express + MongoDB + JWT Auth + Socket.io (real-time) + Swagger Docs + Postman Collection — sab ready hai.
+A production-level backend for the EV Battery Intelligence Dashboard. Built with Node.js, Express, MongoDB, JWT authentication, and Socket.io for real-time updates. Includes Swagger/OpenAPI documentation and a ready-to-use Postman collection.
 
 ---
 
-## 📁 Folder Structure
+## Folder Structure
 
 ```
-ev-battery-backend/
-├── server.js                      # Entry point (yahi se sab start hota hai)
+backend/
+├── server.js                      # Entry point
 ├── package.json
-├── .env.example                   # copy this to .env
-├── EV-Battery-Intelligence.postman_collection.json   # import this in Postman
+├── .env.example                    # copy to .env
+├── EV-Battery-Intelligence.postman_collection.json
 ├── src/
-│   ├── app.js                     # Express app setup (middleware + routes)
+│   ├── app.js                      # Express app setup (middleware + routes)
 │   ├── config/
-│   │   ├── db.js                  # MongoDB connection
-│   │   └── swagger.js             # Swagger/OpenAPI config
-│   ├── models/                    # Mongoose schemas (database tables)
+│   │   ├── db.js                   # MongoDB connection
+│   │   └── swagger.js              # Swagger/OpenAPI config
+│   ├── models/                     # Mongoose schemas
 │   │   ├── User.js
 │   │   ├── Vehicle.js
 │   │   ├── Alert.js
@@ -28,81 +27,73 @@ ev-battery-backend/
 │   ├── controllers/                # Business logic
 │   ├── routes/                     # API endpoints + Swagger docs
 │   ├── middleware/
-│   │   ├── auth.js                # JWT protect + role check
-│   │   ├── error.js               # Central error handler
+│   │   ├── auth.js                 # JWT protect + role check
+│   │   ├── error.js                 # Central error handler
 │   │   └── asyncHandler.js
 │   ├── sockets/
-│   │   ├── index.js                # Socket.io connection handler
-│   │   └── telemetryEngine.js      # Live telemetry simulation (real-time push)
+│   │   ├── index.js                 # Socket.io connection handler
+│   │   └── telemetryEngine.js       # Live telemetry simulation engine
 │   ├── utils/
 │   └── seed/
-│       └── seed.js                # Fills DB with the same demo data your frontend had
+│       └── seed.js                  # Populates the database with demo fleet data
 ```
 
 ---
 
-## 🧠 STEP 1 — Maine tumhara frontend analyze kiya (Summary)
+## Data Model Summary
 
-Tumhara frontend abhi **pure client-side** hai — `src/data/mockData.js` se data aata hai aur
-`setInterval()` se fake real-time simulate hota hai. Koi `fetch`/`axios` call nahi thi.
+The backend was designed by analyzing the original frontend (`Dashboard`, `BatteryHealth`, `ChargeHistory`, `RangePredictor`, `FleetMap`, `Maintenance`, `Settings` pages) and mapping each page's data requirements to a corresponding API module:
 
-Maine yeh cheeze identify ki:
-
-| Frontend Page | Data Needed | Backend Module |
+| Frontend Page | Data Required | Backend Module |
 |---|---|---|
-| Dashboard | Fleet summary, avg health, alerts count | `/vehicles/summary`, `/alerts` |
-| BatteryHealth | Per-vehicle SOH, temp, voltage, cycles, degradation chart | `/vehicles`, `/vehicles/:id/degradation` |
+| Dashboard | Fleet summary, average health, alert counts | `/vehicles/summary`, `/alerts` |
+| BatteryHealth | Per-vehicle SOH, temperature, voltage, cycles, degradation chart | `/vehicles`, `/vehicles/:id/degradation` |
 | ChargeHistory | Session logs, weekly frequency, duration trend | `/charge-sessions/*` |
-| RangePredictor | SOC/temp → predicted range | `/range-predictions` |
-| FleetMap | Vehicle GPS location | `/vehicles` (has `location.lat/lng`) |
-| Maintenance | AI repair recommendations | `/maintenance/recommendations` |
-| Settings | Thresholds + toggles form, CSV/PDF export | `/settings`, `/reports/csv`, `/reports/pdf` |
-| (New) Login | Tumne mangwaya tha, frontend mein abhi nahi tha | `/auth/register`, `/auth/login` |
-
-Har ek ke liye maine real REST API + MongoDB model bana diya hai — bilkul same field names jo
-tumhare `mockData.js` mein the, taaki frontend connect karna easy ho.
+| RangePredictor | SOC/temperature → predicted range | `/range-predictions` |
+| FleetMap | Vehicle status by ID (coordinates handled client-side) | `/vehicles` |
+| Maintenance | AI-generated maintenance recommendations | `/maintenance/recommendations` |
+| Settings | Alert thresholds, notification toggles, CSV/PDF export | `/settings`, `/reports/csv`, `/reports/pdf` |
+| Login | JWT-based authentication | `/auth/register`, `/auth/login` |
 
 ---
 
-## 🛠 STEP 2 — Apne computer mein setup karo (ekdum easy steps)
+## Setup
 
-### 2.1 — MongoDB install karo (agar nahi hai)
-- **Easy option (recommended):** [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) pe free account banao,
-  ek free cluster banao, aur "Connect → Drivers" se connection string copy karo.
-- **Local option:** [MongoDB Community Server](https://www.mongodb.com/try/download/community) install karo apne PC pe.
+### 1. Install MongoDB
+- **Recommended:** [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) — create a free cluster and copy the connection string from "Connect → Drivers"
+- **Local:** [MongoDB Community Server](https://www.mongodb.com/try/download/community)
 
-### 2.2 — Backend folder kholo terminal mein
+### 2. Install dependencies
 ```bash
-cd ev-battery-backend
+cd backend
 npm install
 ```
-Yeh sab packages (express, mongoose, jwt, socket.io, swagger, etc.) install kar dega.
 
-### 2.3 — `.env` file banao
-`.env.example` file ko copy karke naam `.env` rakho:
+### 3. Configure environment variables
 ```bash
 cp .env.example .env
 ```
-Ab `.env` file kholo aur yeh values apni values se replace karo:
+Edit `.env`:
 ```
 MONGO_URI=mongodb://127.0.0.1:27017/ev_battery_dashboard
-JWT_SECRET=koi_bhi_lambi_random_secret_string_daal_do
+JWT_SECRET=<a long random string>
 CLIENT_ORIGIN=http://localhost:5173
 ```
-(Agar MongoDB Atlas use kar rahe ho, to `MONGO_URI` wahan se copy kiya hua connection string daalo)
 
-### 2.4 — Database mein demo data daalo (seed)
+### 4. Seed the database
 ```bash
 npm run seed
 ```
-Yeh EV-001 se EV-004 tak sab vehicles, alerts, charge sessions, aur ek demo login
-(`admin@evfleet.com` / `admin123`) database mein daal dega — bilkul tumhare frontend jaisa data.
+This populates the database with sample vehicles (EV-001–EV-004), alerts, charge sessions, maintenance recommendations, and a demo account:
+```
+email: admin@evfleet.com
+password: admin123
+```
 
-### 2.5 — Server start karo
+### 5. Start the server
 ```bash
 npm run dev
 ```
-Agar sab sahi hua to terminal mein dikhega:
 ```
 ✅ MongoDB Connected
 🚀 EV Battery Intelligence API running on http://localhost:5000
@@ -111,126 +102,94 @@ Agar sab sahi hua to terminal mein dikhega:
 
 ---
 
-## 📘 STEP 3 — Swagger API Documentation dekho
+## API Documentation (Swagger)
 
-Server chalu hone ke baad browser mein kholo:
+With the server running, open:
 ```
 http://localhost:5000/api-docs
 ```
-Yahan tumhe sab APIs interactive form mein dikhenge — directly test bhi kar sakte ho, "Try it out" button se.
-(Sabse pehle `/auth/login` chalao, token copy karo, upar "Authorize" button mein paste karo, phir baaki APIs try karo.)
+All endpoints are documented and testable directly from the browser. Run `/auth/login` first, copy the returned token, click "Authorize" at the top of the page, and paste it in to test authenticated endpoints.
 
 ---
 
-## 📮 STEP 4 — Postman Collection import karo
+## Postman Collection
 
-1. Postman kholo
-2. **Import** button dabao
-3. Is file ko select karo: `EV-Battery-Intelligence.postman_collection.json`
-4. Sabse pehle **Auth → Login** request chalao — token automatically save ho jayega baaki requests ke liye
-5. Ab koi bhi API try kar sakte ho — Vehicles, Alerts, Charge History, Range Predictor, Maintenance, Settings, Reports
-
----
-
-## 🔌 STEP 5 — Frontend already connected hai ✅
-
-Tumhara **frontend project already modified** hai (`App.jsx` + naye `src/lib/api.js`, `src/lib/socket.js`,
-`src/lib/transform.js`, `src/Login.jsx` files) — tumhe kuch bhi manually likhna ya copy-paste karna
-**NAHI** hai. Bas frontend folder mein jaake:
-
-```bash
-cd EV-battery-intelligence-dashboard-main
-npm install
-npm run dev
-```
-
-Frontend `.env` (already bana hua hai, `EV-battery-intelligence-dashboard-main/.env`):
-```
-VITE_API_URL=http://localhost:5000/api
-VITE_SOCKET_URL=http://localhost:5000
-```
-
-Frontend kholte hi ek **Login page** dikhega — demo credentials already fill kiye hue hain
-(`admin@evfleet.com` / `admin123`, jo `npm run seed` se backend mein bana hai). Login karte hi
-poora dashboard **real backend data** se load hoga, aur Socket.io se live updates (health, temp,
-alerts) automatically aate rahenge — bilkul pehle jaise dikhta tha, bas ab data fake nahi, real hai.
-
-Neeche bottom-left corner mein ek chhota **"Logout"** button bhi hai.
+1. Open Postman
+2. **Import** → select `EV-Battery-Intelligence.postman_collection.json`
+3. Run **Auth → Login** first — the token is saved automatically to a collection variable
+4. All other requests will then use that token automatically
 
 ---
 
-## 🔑 API Endpoints — Full List
+## API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/register` | New account banao |
-| POST | `/api/auth/login` | Login + JWT token lo |
-| GET | `/api/auth/me` | Apna profile dekho |
-| GET | `/api/vehicles` | Sab vehicles list |
-| GET | `/api/vehicles/summary` | Fleet dashboard stats |
-| GET | `/api/vehicles/:id` | Ek vehicle ka detail |
-| POST | `/api/vehicles` | Naya vehicle add karo |
-| PATCH | `/api/vehicles/:id` | Telemetry update karo |
-| PATCH | `/api/vehicles/:id/isolate` | Vehicle ko grid se isolate karo |
-| DELETE | `/api/vehicles/:id` | Vehicle remove karo |
-| GET | `/api/vehicles/:id/degradation` | 12-month capacity trend |
+| POST | `/api/auth/register` | Create a new account |
+| POST | `/api/auth/login` | Log in and receive a JWT |
+| GET | `/api/auth/me` | Get current user profile |
+| GET | `/api/vehicles` | List all vehicles |
+| GET | `/api/vehicles/summary` | Fleet-wide dashboard stats |
+| GET | `/api/vehicles/:id` | Get a single vehicle |
+| POST | `/api/vehicles` | Add a new vehicle |
+| PATCH | `/api/vehicles/:id` | Update vehicle telemetry |
+| PATCH | `/api/vehicles/:id/isolate` | Isolate a vehicle from the grid |
+| DELETE | `/api/vehicles/:id` | Remove a vehicle |
+| GET | `/api/vehicles/:id/degradation` | 12-month capacity degradation history |
 | GET | `/api/alerts` | Live alerts feed |
-| POST | `/api/alerts` | Naya alert banao |
-| GET | `/api/alerts/stats` | Severity-wise count |
-| PATCH | `/api/alerts/:id/acknowledge` | Alert acknowledge karo |
-| POST | `/api/alerts/notify-technician` | Technician ko notify karo |
-| GET | `/api/charge-sessions` | Charging logs |
-| POST | `/api/charge-sessions` | Naya session log karo |
+| POST | `/api/alerts` | Create a new alert |
+| GET | `/api/alerts/stats` | Alert counts by severity |
+| PATCH | `/api/alerts/:id/acknowledge` | Acknowledge an alert |
+| POST | `/api/alerts/notify-technician` | Notify a technician |
+| GET | `/api/charge-sessions` | Charging session logs |
+| POST | `/api/charge-sessions` | Log a new session |
 | GET | `/api/charge-sessions/frequency` | Weekly charge frequency |
-| GET | `/api/charge-sessions/duration-trend` | DC vs AC duration trend |
-| GET | `/api/range-predictions` | Har vehicle ka predicted range |
-| POST | `/api/range-predictions/calculate` | Custom range calculate karo |
-| GET | `/api/maintenance/recommendations` | AI maintenance suggestions |
-| POST | `/api/maintenance/recommendations` | Naya suggestion add karo |
-| PATCH | `/api/maintenance/recommendations/:id` | Update karo |
-| DELETE | `/api/maintenance/recommendations/:id` | Delete karo |
-| GET | `/api/settings` | Alert thresholds dekho |
-| PUT | `/api/settings` | Thresholds save karo |
-| GET | `/api/reports/csv` | Fleet report CSV download |
-| GET | `/api/reports/pdf` | Fleet report PDF download |
+| GET | `/api/charge-sessions/duration-trend` | DC Fast vs AC Slow duration trend |
+| GET | `/api/range-predictions` | Predicted range for every vehicle |
+| POST | `/api/range-predictions/calculate` | Calculate a custom range prediction |
+| GET | `/api/maintenance/recommendations` | AI maintenance recommendations |
+| POST | `/api/maintenance/recommendations` | Add a new recommendation |
+| PATCH | `/api/maintenance/recommendations/:id` | Update a recommendation |
+| DELETE | `/api/maintenance/recommendations/:id` | Delete a recommendation |
+| GET | `/api/settings` | Get alert thresholds |
+| PUT | `/api/settings` | Update alert thresholds |
+| GET | `/api/reports/csv` | Download fleet report as CSV |
+| GET | `/api/reports/pdf` | Download fleet report as PDF |
 
-Sab routes (auth ke alawa) `Authorization: Bearer <token>` header maangte hain.
+All routes except `/auth/register` and `/auth/login` require an `Authorization: Bearer <token>` header.
 
 ---
 
-## ⚡ Real-time (Socket.io) Events
+## Real-Time Events (Socket.io)
 
-Backend har 5-8 second mein automatically data update karta hai (jaise pehle frontend ke andar
-`setInterval` karta tha) aur yeh events emit karta hai:
+The backend simulates live telemetry every 5–8 seconds (mirroring the timers that previously ran client-side) and emits the following events:
 
-| Event | Kab fire hota hai |
+| Event | Trigger |
 |---|---|
-| `vehicle:update` | Kisi vehicle ki SOH/temp/SOC change hui |
-| `alert:new` | Naya alert generate hua |
-| `technician:notified` | Technician ko notify kiya gaya |
-| `recommendation:new` / `recommendation:update` | Maintenance suggestion add/update hua |
-| `settings:update` | Thresholds change hue |
+| `vehicle:update` | A vehicle's SOH/temperature/SOC changed |
+| `alert:new` | A new alert was generated |
+| `technician:notified` | A technician was notified |
+| `recommendation:new` / `recommendation:update` | A maintenance recommendation was added or updated |
+| `settings:update` | Alert thresholds were changed |
 
-`.env` mein `SIMULATE_TELEMETRY=false` karke isse band bhi kar sakte ho (agar real IoT devices se
-data aayega to simulation ki zaroorat nahi).
+Set `SIMULATE_TELEMETRY=false` in `.env` to disable this simulation (e.g. if real IoT device data will be used instead).
 
 ---
 
-## 🔒 Security Features Included
+## Security
 
 - Password hashing with **bcrypt**
-- **JWT** authentication with expiry
+- **JWT** authentication with configurable expiry
 - **helmet** for HTTP security headers
 - **express-rate-limit** to prevent abuse
-- Centralized error handling (no raw stack traces in production)
-- Input validation on all models (Mongoose schema validation)
+- Centralized error handling (no stack traces leaked in production)
+- Mongoose schema validation on all models
 - Role-based access control (admin / fleet_manager / technician / viewer)
 
 ---
 
-## 🚀 Deployment Tips
+## Deployment
 
-- Backend ko **Render**, **Railway**, ya **Vercel (serverless)** pe deploy kar sakte ho — sirf `.env`
-  variables set karne honge (`MONGO_URI`, `JWT_SECRET`, `CLIENT_ORIGIN`).
-- MongoDB ke liye **MongoDB Atlas** free tier production ke liye bhi kaafi hai shuru mein.
-- Production mein `NODE_ENV=production` set karna mat bhoolna — isse error stack traces hide ho jayenge.
+- Deploy to **Render**, **Railway**, or a similar Node.js host — set the environment variables (`MONGO_URI`, `JWT_SECRET`, `CLIENT_ORIGIN`) in the platform's dashboard
+- **MongoDB Atlas**'s free tier is sufficient for initial production use
+- Set `NODE_ENV=production` in production to suppress error stack traces in API responses

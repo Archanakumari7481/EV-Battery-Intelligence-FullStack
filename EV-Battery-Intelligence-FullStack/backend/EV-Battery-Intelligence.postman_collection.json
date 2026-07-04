@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "EV Battery Intelligence Dashboard API",
+    "description": "Complete REST API collection for the EV Battery Intelligence Dashboard backend. Run 'Login' first — the token is auto-saved to the {{token}} variable for every other request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fleet Admin\",\n  \"email\": \"admin@evfleet.com\",\n  \"password\": \"admin123\",\n  \"role\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data && data.data && data.data.token) {",
+                  "  pm.collectionVariables.set('token', data.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@evfleet.com\",\n  \"password\": \"admin123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" }
+        }
+      ]
+    },
+    {
+      "name": "Vehicles",
+      "item": [
+        { "name": "Get All Vehicles", "request": { "method": "GET", "url": "{{baseUrl}}/vehicles" } },
+        { "name": "Get Fleet Summary", "request": { "method": "GET", "url": "{{baseUrl}}/vehicles/summary" } },
+        { "name": "Get Vehicle by ID", "request": { "method": "GET", "url": "{{baseUrl}}/vehicles/EV-001" } },
+        { "name": "Get Degradation History", "request": { "method": "GET", "url": "{{baseUrl}}/vehicles/EV-001/degradation" } },
+        {
+          "name": "Create Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/vehicles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"EV-005\",\n  \"healthScore\": 95,\n  \"soc\": 90,\n  \"temp\": 30,\n  \"voltage\": 400,\n  \"cycles\": 10,\n  \"location\": { \"lat\": 22.5726, \"lng\": 88.3639, \"city\": \"Kolkata\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Vehicle Telemetry",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/vehicles/EV-001",
+            "body": { "mode": "raw", "raw": "{\n  \"soc\": 80,\n  \"temp\": 33.5\n}" }
+          }
+        },
+        {
+          "name": "Isolate Vehicle",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/vehicles/EV-003/isolate",
+            "body": { "mode": "raw", "raw": "{\n  \"autoIsolated\": false\n}" }
+          }
+        },
+        { "name": "Delete Vehicle", "request": { "method": "DELETE", "url": "{{baseUrl}}/vehicles/EV-005" } }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        { "name": "Get Alerts Feed", "request": { "method": "GET", "url": "{{baseUrl}}/alerts?limit=7" } },
+        { "name": "Get Alert Stats", "request": { "method": "GET", "url": "{{baseUrl}}/alerts/stats" } },
+        {
+          "name": "Create Alert",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/alerts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"EV-003\",\n  \"message\": \"Thermal Runaway Risk: Cell Group 4 exceeded 49°C\",\n  \"severity\": \"critical\",\n  \"type\": \"thermal\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Notify Technician",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/alerts/notify-technician",
+            "body": { "mode": "raw", "raw": "{\n  \"vehicleId\": \"EV-003\"\n}" }
+          }
+        },
+        {
+          "name": "Acknowledge Alert",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/alerts/REPLACE_ALERT_ID/acknowledge" }
+        }
+      ]
+    },
+    {
+      "name": "Charge History",
+      "item": [
+        { "name": "Get Charge Sessions", "request": { "method": "GET", "url": "{{baseUrl}}/charge-sessions?limit=20" } },
+        { "name": "Get Charge Frequency (weekly)", "request": { "method": "GET", "url": "{{baseUrl}}/charge-sessions/frequency" } },
+        { "name": "Get Duration Trend", "request": { "method": "GET", "url": "{{baseUrl}}/charge-sessions/duration-trend" } },
+        {
+          "name": "Log Charge Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/charge-sessions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"EV-001\",\n  \"date\": \"2026-07-01\",\n  \"start\": 20,\n  \"end\": 85,\n  \"duration\": 40,\n  \"energy\": 48.5,\n  \"type\": \"DC Fast\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Range Predictor",
+      "item": [
+        { "name": "Get Live Range Predictions", "request": { "method": "GET", "url": "{{baseUrl}}/range-predictions" } },
+        {
+          "name": "Calculate Custom Range",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/range-predictions/calculate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batteryPercent\": 72,\n  \"temperature\": 42.8,\n  \"healthScore\": 61,\n  \"baseRangeKm\": 400\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maintenance",
+      "item": [
+        { "name": "Get Recommendations", "request": { "method": "GET", "url": "{{baseUrl}}/maintenance/recommendations" } },
+        {
+          "name": "Create Recommendation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/maintenance/recommendations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"EV-003\",\n  \"component\": \"Battery Pack\",\n  \"icon\": \"Battery\",\n  \"issue\": \"Cell group 4 degrading rapidly\",\n  \"urgency\": \"Critical\",\n  \"urgencyText\": \"Act within 3 days\",\n  \"action\": \"Replace cell group 4 immediately\",\n  \"cost\": 45000,\n  \"confidence\": 94\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Recommendation",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/maintenance/recommendations/REPLACE_ID",
+            "body": { "mode": "raw", "raw": "{\n  \"resolved\": true\n}" }
+          }
+        },
+        {
+          "name": "Delete Recommendation",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/maintenance/recommendations/REPLACE_ID" }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        { "name": "Get Settings", "request": { "method": "GET", "url": "{{baseUrl}}/settings" } },
+        {
+          "name": "Update Settings",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"thermalTriggerTemp\": 49,\n  \"criticalSohThreshold\": 35,\n  \"alertRefreshInterval\": 8,\n  \"emailAlerts\": true,\n  \"soundAlerts\": false,\n  \"autoIsolate\": false\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        { "name": "Export CSV", "request": { "method": "GET", "url": "{{baseUrl}}/reports/csv" } },
+        { "name": "Export PDF", "request": { "method": "GET", "url": "{{baseUrl}}/reports/pdf" } }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [{ "name": "API Health", "request": { "method": "GET", "url": "{{baseUrl}}/health" } }]
+    }
+  ]
+}

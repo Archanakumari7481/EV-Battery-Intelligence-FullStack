@@ -1,0 +1,16 @@
+# Node.js backend Dockerfile for Back4app Containers
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies first (better build caching)
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Copy the rest of the backend source code
+COPY . .
+
+# Back4app / most container platforms provide the PORT via env variable
+EXPOSE 5000
+
+CMD ["node", "server.js"]

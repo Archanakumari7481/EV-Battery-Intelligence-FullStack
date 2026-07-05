@@ -20,6 +20,20 @@ const reportRoutes = require('./routes/reportRoutes');
 function createApp(io) {
   const app = express();
 
+  // Socket.io/Engine.io registers its own request listener on the same raw
+  // HTTP server to handle /socket.io/* requests. Express is a SEPARATE
+  // listener on that same server, so it also receives those requests. Without
+  // this guard, Express would try to send its own 404 response after
+  // Engine.io already responded, crashing with ERR_HTTP_HEADERS_SENT. This
+  // middleware stops Express from touching anything under /socket.io and lets
+  // Engine.io's own listener handle it exclusively.
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/socket.io')) {
+      return;
+    }
+    next();
+  });
+
   // ---- Security & core middleware ----
   app.use(helmet());
   app.use(express.json());

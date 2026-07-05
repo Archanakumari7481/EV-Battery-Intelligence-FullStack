@@ -23,6 +23,16 @@ async function request(endpoint, options = {}) {
     // non-JSON response (e.g. CSV/PDF downloads) — caller handles res directly
   }
 
+  if (res.status === 401 && getToken() && !endpoint.startsWith('/auth/')) {
+    // Token is missing/invalid/expired — clear it and send the user back to
+    // the login screen automatically instead of getting stuck on an error.
+    localStorage.removeItem('ev_token');
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+    throw new Error('Session expired. Please log in again.');
+  }
+
   if (!res.ok) {
     throw new Error((json && json.message) || `Request failed (${res.status})`);
   }
